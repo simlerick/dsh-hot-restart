@@ -974,3 +974,86 @@ test('wakeIdle: false keeps the mid-task-only behaviour', async () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+// ── idle conversations are NOT woken by default ─────────────────────────────
+//
+// A finished conversation has no work to resume. Waking it makes an agent speak
+// again with nothing to do, which the operator reads as "why did this fire,
+// there was no work here". Default must be mid-task only.
+
+test('an idle-but-open conversation is not woken by default', async () => {
+  const ctx = fakeMultiCtx([SESSION_ID, SECOND_ID], {
+    // SECOND_ID finished its turn cleanly: nothing to resume.
+    [SECOND_ID]: [{ type: 'turn/start', data: { turn: 1 } }, { type: 'turn/end', data: { turn: 1 } }],
+  })
+  const original = ctx.get
+  ctx.get = (name) => {
+    if (name === 'sessionQuery') {
+      return {
+        observeSession: async (id) => {
+          const key = String(id)
+          if (![SESSION_ID, SECOND_ID].includes(key)) return undefined
+          return {
+            header: sessionHeader({ id: key }),
+            events: key === SECOND_ID
+              ? [{ type: 'turn/start', data: { turn: 1 } }, { type: 'turn/end', data: { turn: 1 } }]
+              : [],
+            projections: undefined,
+          }
+        },
+        // Both conversations are OPEN (live), but only SESSION_ID is working.
+        listSessions: async () => [
+          { header: sessionHeader({ id: SESSION_ID }), live: true },
+          { header: sessionHeader({ id: SECOND_ID }), live: true },
+        ],
+      }
+    }
+    return original.call(ctx, name)
+  }
+  const { engine, cleanup } = makeEngine({ ctx })
+  try {
+    engine.load()
+    const resumable = await engine.listResumable()
+    assert.deepEqual(
+      resumable.map((row) => row.sessionId),
+      [],
+      'a finished conversation must not be listed as needing continuation',
+    )
+  } finally {
+    cleanup()
+  }
+})
+
+test('wakeIdle: true opts back in to waking open-but-finished conversations', async () => {
+  const ctx = fakeMultiCtx([SECOND_ID])
+  const original = ctx.get
+  ctx.get = (name) => {
+    if (name === 'sessionQuery') {
+      return {
+        observeSession: async (id) => ({
+          header: sessionHeader({ id: String(id) }),
+          events: [{ type: 'turn/start', data: { turn: 1 } }, { type: 'turn/end', data: { turn: 1 } }],
+          projections: undefined,
+        }),
+        listSessions: async () => [{ header: sessionHeader({ id: SECOND_ID }), live: true }],
+      }
+    }
+    return original.call(ctx, name)
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'hr-core-'))
+  try {
+    const engine = new HotRestart({
+      ctx,
+      dataDir: dir,
+      config: resolveConfig({ graceMs: 1, wakeIdle: true }),
+      logger: { info: () => {}, warn: () => {} },
+      createUserMessage: (input) => input,
+    })
+    engine.load()
+    const rows = await engine.listResumable()
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].reason, 'open-idle')
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})

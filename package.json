@@ -1,6 +1,6 @@
 {
   "name": "dsh-hot-restart",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DSH 热重启插件：一次重启唤醒所有被打断的对话，每个对话收到基于自己日志生成的续接消息。支持 macOS（launchd）与 Windows（renderer IPC），零外部依赖。",
   "type": "module",
   "main": "lib/index.js",
