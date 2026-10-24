@@ -1,0 +1,15 @@
+# dsh-hot-restart loader entry.
+#
+# This file is applied automatically when the package is listed in
+# `dsh.profile.bundles` of a profile's package.json. Do NOT also add a manual
+# entry for the same id in the profile's own cordis.patch.yml: one loader id may
+# only exist once per profile.
+- insert:
+    - id: dsh-hot-restart
+      name: dsh-hot-restart
+      config:
+        autoWake: true
+        graceMs: 1500
+        ui: true
+        tools: true
+        systemPrompt: true

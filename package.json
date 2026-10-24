@@ -1,0 +1,62 @@
+{
+  "name": "dsh-hot-restart",
+  "version": "0.2.0",
+  "description": "DSH 热重启插件：一次重启唤醒所有被打断的对话，每个对话收到基于自己日志生成的续接消息。支持 macOS（launchd）与 Windows（renderer IPC），零外部依赖。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./core": "./lib/core.js",
+    "./pure": "./lib/pure.js",
+    "./view": "./lib/view.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "harness",
+    "restart",
+    "session"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  },
+  "peerDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simlerick/dsh-hot-restart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simlerick/dsh-hot-restart/issues"
+  },
+  "homepage": "https://github.com/simlerick/dsh-hot-restart#readme",
+  "author": "simlerick",
+  "contributors": [
+    {
+      "name": "Minester9421",
+      "url": "https://github.com/Minester9421/dsh-hot-restart"
+    }
+  ]
+}
